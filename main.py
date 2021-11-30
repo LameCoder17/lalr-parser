@@ -50,7 +50,7 @@ class parser(QtWidgets.QMainWindow):
     def open_file(self):
         file = QtWidgets.QFileDialog.getOpenFileName(self,'Open Grammar file')
         if file:
-            file = open(file,'r')
+            file = open(file[0],'r')
             self.ui.plainTextEdit.setPlainText(file.read())
             file.close()
             self.ui.lineEdit.clear()
