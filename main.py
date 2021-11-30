@@ -1,14 +1,15 @@
-
 import sys
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtGui, QtCore, uic, QtWidgets
+from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtCore import *
 from design import Ui_MainWindow
 
 from impl import calculate_first, term_and_nonterm, get_augmented , find_states, combine_states, get_parse_table
 from  state import State, lalrState
 
-class parser(QtGui.QMainWindow):
+class parser(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
-        QtGui.QWidget.__init__(self,parent)
+        QtWidgets.QMainWindow.__init__(self,parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.setFixedSize(852, 671)
@@ -16,7 +17,8 @@ class parser(QtGui.QMainWindow):
 
         self.init()
 
-        QtCore.QObject.connect(self.ui.action_Open,QtCore.SIGNAL("triggered()"),self.open_file)
+        #QtCore.QObject.connect(self.ui.action_Open,QtCore.SIGNAL("triggered()"),self.open_file)
+        
         self.ui.action_Exit.triggered.connect(self.exit_app)
         self.ui.display.clicked.connect(self.disp)
         self.ui.first.clicked.connect(self.disp_first)
@@ -26,6 +28,7 @@ class parser(QtGui.QMainWindow):
         self.ui.plainTextEdit.textChanged.connect(self.check_changed)
         self.ui.parse.clicked.connect(self.disp_parsing)
         self.ui.actionAuthor.triggered.connect(self.disp_author)
+        self.ui.action_Open.triggered.connect(self.open_file)
 
 
     def init(self):
@@ -45,8 +48,8 @@ class parser(QtGui.QMainWindow):
 
 
     def open_file(self):
-        file = QtGui.QFileDialog.getOpenFileName(self,'Open Grammar file')
-        if file != '':
+        file = QtWidgets.QFileDialog.getOpenFileName(self,'Open Grammar file')
+        if file:
             file = open(file,'r')
             self.ui.plainTextEdit.setPlainText(file.read())
             file.close()
@@ -246,12 +249,12 @@ class parser(QtGui.QMainWindow):
         QtGui.QApplication.quit()
         
     def disp_author(self):
-        QtGui.QMessageBox.information(self, "About", "LALR PARSER\n\nAuthor:\n  Akshay Hebbar Y S\t", QtGui.QMessageBox.Ok)
+        QtWidgets.QMessageBox.information(self, "About", "LALR PARSER\n\nAuthor:\n  Akshay Hebbar Y S\t", QtWidgets.QMessageBox.Ok)
 
 
 
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     myapp = parser()
     myapp.show()
     sys.exit(app.exec())
