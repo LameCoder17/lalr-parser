@@ -16,8 +16,6 @@ class parser(QtWidgets.QMainWindow):
         self.setWindowTitle("LALR Parser")
 
         self.init()
-
-        #QtCore.QObject.connect(self.ui.action_Open,QtCore.SIGNAL("triggered()"),self.open_file)
         
         self.ui.action_Exit.triggered.connect(self.exit_app)
         self.ui.display.clicked.connect(self.disp)
@@ -49,7 +47,7 @@ class parser(QtWidgets.QMainWindow):
 
     def open_file(self):
         file = QtWidgets.QFileDialog.getOpenFileName(self,'Open Grammar file')
-        if file:
+        if file[0] != '':
             file = open(file[0],'r')
             self.ui.plainTextEdit.setPlainText(file.read())
             file.close()
@@ -95,8 +93,6 @@ class parser(QtWidgets.QMainWindow):
             self.ui.textBrowser.setText("Invalid grammar")
             self.init()
             
-
-
 ############################         DISPLAY          ################################
 
     def disp(self):
@@ -110,7 +106,6 @@ class parser(QtWidgets.QMainWindow):
                 self.ui.textBrowser.append(s)
             self.ui.textBrowser.append("\nNon Terminals : "+' '.join(self.non_term)+"\nTerminals : "+' '.join(self.term))
         
-
     def disp_first(self):
         if self.first == {} or self.changed:
             self.read_input()
@@ -118,7 +113,6 @@ class parser(QtWidgets.QMainWindow):
             self.ui.textBrowser.clear()
             for nonterm in self.non_term:
                 self.ui.textBrowser.append('First('+nonterm+') : '+' '.join(self.first[nonterm])+'\n')
-
 
     def disp_lr1_states(self):
         if self.states == [] or self.changed:
@@ -139,8 +133,6 @@ class parser(QtWidgets.QMainWindow):
                     for k,v in state.actions.items():
                         self.ui.textBrowser.insertPlainText(str(k)+' -> '+str(abs(v))+'\t')
 
-
-
     def disp_lalr_states(self):
         if self.lalr_states == [] or self.changed:
             self.read_input()
@@ -159,8 +151,6 @@ class parser(QtWidgets.QMainWindow):
                     self.ui.textBrowser.append('\nActions : ')
                     for k,v in state.actions.items():
                         self.ui.textBrowser.insertPlainText(str(k)+' -> '+str(abs(v))+'\t')
-
-
 
     def disp_parse_table(self):
         if self.grammar == [] or self.changed:
@@ -203,7 +193,6 @@ class parser(QtWidgets.QMainWindow):
                 self.ui.textBrowser.append(line)
                 self.ui.textBrowser.append(s)
 
-
     def disp_parsing(self):
         if self.grammar == [] or self.changed:
             self.read_input()
@@ -211,8 +200,6 @@ class parser(QtWidgets.QMainWindow):
             self.ui.textBrowser.clear()
             line_input = self.ui.lineEdit.text()
             self.parse(self.parse_table, self.augment_grammar, line_input)
-
-
 
     def parse(self,parse_table,augment_grammar,inpt):
         inpt = list(inpt+'$')
@@ -222,7 +209,9 @@ class parser(QtWidgets.QMainWindow):
             head = '{0:40} {1:40} {2:40}'.format("Stack","Input", "Actions")
             self.ui.textBrowser.setText(head)
             while True:
-                string = '\n{0:<40} {1:<40} '.format(stack, ''.join(inpt))
+                x = ''.join(inpt)
+                #string = '\n {0:<40} {1:<40} '.format(stack, ''.join(inpt))
+                string = f'\n {str(stack):40} {str(x):80} '
                 s = stack[len(stack)-1]
                 action = parse_table[s][a]
                 if action > 0:
@@ -244,14 +233,11 @@ class parser(QtWidgets.QMainWindow):
         except KeyError:
             self.ui.textBrowser.append('\n\nERROR\n')
 
-
     def exit_app(self):
         QtGui.QApplication.quit()
         
     def disp_author(self):
         QtWidgets.QMessageBox.information(self, "About", "LALR PARSER\n\nAuthor:\n  Akshay Hebbar Y S\t", QtWidgets.QMessageBox.Ok)
-
-
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
