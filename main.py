@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5.QtCore import *
 from design import Ui_MainWindow
 
-from impl import calculate_first, term_and_nonterm, get_augmented , find_states, combine_states, get_parse_table
+from impl import calculateFirst, getTerminalsAndNonTerminals, getAugmented , findStates, combineStates, makeParseTable
 from  state import State, lalrState
 
 class parser(QtWidgets.QMainWindow):
@@ -12,8 +12,10 @@ class parser(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self,parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.setFixedSize(852, 671)
+        self.setFixedSize(1024, 720)
         self.setWindowTitle("LALR Parser")
+        #self.setStyleSheet("background-color: QColor(27, 27, 27);")
+        
 
         self.init()
         
@@ -27,6 +29,12 @@ class parser(QtWidgets.QMainWindow):
         self.ui.parse.clicked.connect(self.disp_parsing)
         self.ui.actionAuthor.triggered.connect(self.disp_author)
         self.ui.action_Open.triggered.connect(self.open_file)
+        
+        self.ui.groupBox.setStyleSheet("color: black; border: 0px solid black;")
+        self.ui.groupBox_2.setStyleSheet("color: black; border: 1px solid black;")
+        self.ui.groupBox_3.setStyleSheet("color: black; border: 0px solid black;")
+        self.ui.textBrowser.setStyleSheet("color: black; border: 4px solid black;")
+        self.ui.plainTextEdit.setStyleSheet("color: black; border: 4px solid black;")
 
 
     def init(self):
@@ -34,10 +42,10 @@ class parser(QtWidgets.QMainWindow):
         self.augment_grammar = []
         self.first = {}
         self.term = []
-        self.non_term = []
+        self.nonTerminals = []
         self.states = []
-        self.lalr_states = []
-        self.parse_table = []
+        self.lalrStates = []
+        self.parseTable = []
         State.state_count = -1
         lalrState.state_count = 0
 
@@ -65,27 +73,27 @@ class parser(QtWidgets.QMainWindow):
                 line = line.replace(' ' ,'')
         
                 if line != '':
-                    line_list = line.split('->')
+                    listOfLines = line.split('->')
         
-                    if line_list[0].isupper() and line_list[1] != '':
-                        if '|' in line_list[1]:
-                            prod_list = line_list[1].split('|')
+                    if listOfLines[0].isupper() and listOfLines[1] != '':
+                        if '|' in listOfLines[1]:
+                            prod_list = listOfLines[1].split('|')
                             for prod in prod_list:
-                                self.grammar.append([line_list[0],prod])
+                                self.grammar.append([listOfLines[0],prod])
                         else:
-                            self.grammar.append(line_list)
+                            self.grammar.append(listOfLines)
                     else:
                         self.ui.textBrowser.clear()
                         self.ui.textBrowser.setText("Invalid grammar")
                         self.grammar = []
     
             if self.grammar != []:
-                term_and_nonterm(self.grammar,self.term,self.non_term)
-                calculate_first(self.grammar,self.first,self.term,self.non_term)
-                get_augmented(self.grammar,self.augment_grammar)
-                find_states(self.states,self.augment_grammar,self.first,self.term,self.non_term)
-                combine_states(self.lalr_states, self.states)
-                get_parse_table(self.parse_table,self.lalr_states,self.augment_grammar)
+                getTerminalsAndNonTerminals(self.grammar,self.term,self.nonTerminals)
+                calculateFirst(self.grammar,self.first,self.term,self.nonTerminals)
+                getAugmented(self.grammar,self.augment_grammar)
+                findStates(self.states,self.augment_grammar,self.first,self.term,self.nonTerminals)
+                combineStates(self.lalrStates, self.states)
+                makeParseTable(self.parseTable,self.lalrStates,self.augment_grammar)
                 self.changed = False
 
         except (KeyError, IndexError):
@@ -104,14 +112,14 @@ class parser(QtWidgets.QMainWindow):
             for prod in self.grammar:
                 s =  prod[0]+ ' -> ' + prod[1]+'\n'
                 self.ui.textBrowser.append(s)
-            self.ui.textBrowser.append("\nNon Terminals : "+' '.join(self.non_term)+"\nTerminals : "+' '.join(self.term))
+            self.ui.textBrowser.append("\nNon Terminals : "+' '.join(self.nonTerminals)+"\nTerminals : "+' '.join(self.term))
         
     def disp_first(self):
         if self.first == {} or self.changed:
             self.read_input()
         if self.first != {}:
             self.ui.textBrowser.clear()
-            for nonterm in self.non_term:
+            for nonterm in self.nonTerminals:
                 self.ui.textBrowser.append('First('+nonterm+') : '+' '.join(self.first[nonterm])+'\n')
 
     def disp_lr1_states(self):
@@ -134,12 +142,12 @@ class parser(QtWidgets.QMainWindow):
                         self.ui.textBrowser.insertPlainText(str(k)+' -> '+str(abs(v))+'\t')
 
     def disp_lalr_states(self):
-        if self.lalr_states == [] or self.changed:
+        if self.lalrStates == [] or self.changed:
             self.read_input()
-        if self.lalr_states != []:
+        if self.lalrStates != []:
             self.ui.textBrowser.clear()
             self.ui.textBrowser.append("Number of LALR states : " + str(lalrState.state_count))
-            for state in self.lalr_states:
+            for state in self.lalrStates:
                 self.ui.textBrowser.append('----------------------------------------------------------------')
                 if state.state_num == 0:
                     self.ui.textBrowser.append("\nI"+str(state.state_num)+' : '+'\tGot by -> '+str(state.parent_list)+'\n')
@@ -161,7 +169,7 @@ class parser(QtWidgets.QMainWindow):
             all_symb = []
             all_symb.extend(self.term)
             all_symb.append('$')
-            all_symb.extend(self.non_term)
+            all_symb.extend(self.nonTerminals)
             if 'e' in all_symb:
                 all_symb.remove('e')
 
@@ -172,11 +180,11 @@ class parser(QtWidgets.QMainWindow):
             s = '------------'*len(all_symb)
             self.ui.textBrowser.append(s)
 
-            for index, state in enumerate(self.parse_table):
+            for index, state in enumerate(self.parseTable):
                 line = '{0:<12}'.format(index)
                 for X in all_symb:
                     if X in state.keys():
-                        if X in self.non_term:
+                        if X in self.nonTerminals:
                             action = state[X]
                         else:
                             if state[X] > 0:
@@ -199,7 +207,7 @@ class parser(QtWidgets.QMainWindow):
         if self.grammar != []:
             self.ui.textBrowser.clear()
             line_input = self.ui.lineEdit.text()
-            self.parse(self.parse_table, self.augment_grammar, line_input)
+            self.parse(self.parseTable, self.augment_grammar, line_input)
 
     def parse(self,parse_table,augment_grammar,inpt):
         inpt = list(inpt+'$')
@@ -210,7 +218,6 @@ class parser(QtWidgets.QMainWindow):
             self.ui.textBrowser.setText(head)
             while True:
                 x = ''.join(inpt)
-                #string = '\n {0:<40} {1:<40} '.format(stack, ''.join(inpt))
                 string = f'\n {str(stack):40} {str(x):80} '
                 s = stack[len(stack)-1]
                 action = parse_table[s][a]

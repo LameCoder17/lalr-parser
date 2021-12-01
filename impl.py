@@ -1,7 +1,7 @@
 from state import State, lalrState
 from copy import deepcopy
 
-def term_and_nonterm(grammar,term,non_term):
+def getTerminalsAndNonTerminals(grammar,term,non_term):
     for prod in grammar:
         if prod[0] not in non_term:
             non_term.append(prod[0])
@@ -11,26 +11,26 @@ def term_and_nonterm(grammar,term,non_term):
                     term.append(char)
 
 
-def calculate_first(grammar,first,term,non_term):
+def calculateFirst(grammar,first,term,non_term):
     for t in term:
         first[t] = t;
     for nt in non_term:
         first[nt] = set({})
     for nt in non_term:
-        get_first(nt,grammar,first,term)
+        getFirst(nt,grammar,first,term)
 
 
-def get_first(nt,grammar,first,term):
+def getFirst(nt,grammar,first,term):
     for prod in grammar:
         if nt in prod[0]:
             rhs = prod[1]
-            first_char = rhs[0]
-            if first_char in term:
-                first[nt].add(first[first_char])
+            firstChar = rhs[0]
+            if firstChar in term:
+                first[nt].add(first[firstChar])
             else:
                 for char in rhs:
                     if not first[char] and nt != char:
-                        get_first(char,grammar,first,term)
+                        getFirst(char,grammar,first,term)
 
                 i = 0
                 while i < len(rhs) and 'e' in first[rhs[i]]:
@@ -45,119 +45,119 @@ def get_first(nt,grammar,first,term):
                         first[nt].add(elem)
 
 
-def get_augmented(grammar,augment_grammar):
+def getAugmented(grammar,augment_grammar):
     augment_grammar.append([grammar[0][0]+"'",grammar[0][0]])
     augment_grammar.extend(grammar)
 
-def closure(I,augment_grammar,first,non_term):
+def closure(I,augmentedGrammar,first,nonTerminal):
     while True:
-        new_item_added = False
+        isNewItemAdded = False
         for item in I:
-            cursor_pos = item[1].index('.')
-            if cursor_pos == (len(item[1])-1):
+            position = item[1].index('.')
+            if position == (len(item[1])-1):
                 continue
-            next_char = item[1][cursor_pos+1]
-            if next_char in non_term:
-                for prod in augment_grammar:
-                    if next_char == prod[0]:
+            next = item[1][position+1]
+            if next in nonTerminal:
+                for prod in augmentedGrammar:
+                    if next == prod[0]:
                         if prod[1] == 'e':
                             rhs = 'e.'
                         else:
                             rhs = '.' + prod[1]
-                        la = []                                     #look ahead
-                        if cursor_pos < (len(item[1]) - 2):
-                            Ba = item[1][cursor_pos+2]
+                        lookAhead = []                                     #look ahead
+                        if position < (len(item[1]) - 2):
+                            Ba = item[1][position+2]
                             for firs in first[Ba]:
                                 if 'e' == firs:
                                     for elem in item[2]:
-                                        if elem not in la:
-                                            la.append(elem)
+                                        if elem not in lookAhead:
+                                            lookAhead.append(elem)
                                 else:
-                                    if firs not in la:
-                                        la.append(firs)
+                                    if firs not in lookAhead:
+                                        lookAhead.append(firs)
                         else:
-                            la = deepcopy(item[2])
+                            lookAhead = deepcopy(item[2])
 
-                        new_item = [next_char,rhs,la]               #structure of each item
+                        newItem = [next,rhs,lookAhead]               #structure of each item
                         
-                        if new_item not in I:
-                            same_item_with_diff_la = False
+                        if newItem not in I:
+                            sameStateWithDifferentLookAhead = False
                             for item_ in I:
-                                if item_[0] == new_item[0] and item_[1] == new_item[1]:
-                                    same_item_with_diff_la = True
-                                    for las in la:
+                                if item_[0] == newItem[0] and item_[1] == newItem[1]:
+                                    sameStateWithDifferentLookAhead = True
+                                    for las in lookAhead:
                                         if las not in item_[2]:
                                             item_[2].append(las)
-                                            new_item_added = True
-                            if not same_item_with_diff_la:
-                                I.append(new_item)
-                                new_item_added = True
+                                            isNewItemAdded = True
+                            if not sameStateWithDifferentLookAhead:
+                                I.append(newItem)
+                                isNewItemAdded = True
 
-        if not new_item_added:
+        if not isNewItemAdded:
             break
 
 
-def goto(I,X,augment_grammar,first,non_term):
+def goto(I,X,augmentedGrammar,first,nonTerminals):
     J =[]
     for item in I:
-        cursor_pos = item[1].index('.')
-        if cursor_pos < len(item[1])-1:
-            next_char = item[1][cursor_pos+1]
-            if next_char == X :
-                new_rhs = item[1].replace('.'+X,X+'.')
-                new_item = [item[0],new_rhs,item[2]]
-                J.append(new_item)
-    closure(J,augment_grammar,first,non_term)
+        position = item[1].index('.')
+        if position < len(item[1])-1:
+            next = item[1][position+1]
+            if next == X :
+                newRHS = item[1].replace('.'+X,X+'.')
+                newItem = [item[0],newRHS,item[2]]
+                J.append(newItem)
+    closure(J,augmentedGrammar,first,nonTerminals)
     return J
 
 
 
-def isSame(states,new_state,I,X):
+def isSame(states,newState,I,X):
     for J in states:
-        if J.state == new_state:
+        if J.state == newState:
             I.update_goto(X,J)
             return True
     return False
 
 
 
-def init_first(augment_grammar,first,non_term):
-    I = [[augment_grammar[0][0],'.'+augment_grammar[0][1],['$']]]
-    closure(I,augment_grammar,first,non_term)
+def initFirst(augmentedGrammar,first,nonTerminals):
+    I = [[augmentedGrammar[0][0],'.'+augmentedGrammar[0][1],['$']]]
+    closure(I,augmentedGrammar,first,nonTerminals)
     return I
 
 
-def find_states(states,augment_grammar,first,term,non_term):
-    first_state = init_first(augment_grammar,first,non_term)
-    I = State(first_state)
+def findStates(states,augmentedGrammar,first,terminals,nonTerminals):
+    state1 = initFirst(augmentedGrammar,first,nonTerminals)
+    I = State(state1)
     states.append(I)
-    all_symb = non_term + term
+    allSymbols = nonTerminals + terminals
     while True:
-        new_state_added =False
+        isNewStateAdded =False
         for I in states:
-            for X in all_symb:
-                new_state = goto(I.state,X,augment_grammar,first,non_term)              #goto(I,X)
-                if (new_state != [] ) and not isSame(states,new_state,I,X):
-                    N = State(new_state)
+            for X in allSymbols:
+                newState = goto(I.state,X,augmentedGrammar,first,nonTerminals)              #goto(I,X)
+                if (newState != [] ) and not isSame(states,newState,I,X):
+                    N = State(newState)
                     I.update_goto(X,N)
                     N.update_parentName(I,X)
                     states.append(N)
-                    new_state_added = True
+                    isNewStateAdded = True
 
-        if not new_state_added:
+        if not isNewStateAdded:
             break
 
 
-def combine_states(lalr_states,states):
+def combineStates(lalrStates,states):
     first = lalrState(states[0])
     first.update_parentList(states[0])
-    lalr_states.append(first)
+    lalrStates.append(first)
     mapping = [0]
     for I in states[1:]:
-        state_found = False
-        for J in lalr_states:
+        isStateFound = False
+        for J in lalrStates:
             if J.state[0][:2] == I.state[0][:2] :
-                state_found = True
+                isStateFound = True
                 mapping.append(J.state_num)
                 J.update_parentList(I)
                 for index, item in enumerate(J.state):
@@ -165,32 +165,31 @@ def combine_states(lalr_states,states):
                         if la not in item[2]:
                             item[2].append(la)
 
-        if not state_found:
+        if not isStateFound:
             new_state = lalrState(I)
             new_state.update_parentList(I)
 
-            lalr_states.append(new_state)
+            lalrStates.append(new_state)
             mapping.append(new_state.state_num)
 
-    for I in lalr_states:
+    for I in lalrStates:
         I.update_mapping(mapping)
 
 
 
-def get_parse_table(parse_table,states,augmented_grammar):                      #here states -> lalr_states
+def makeParseTable(parseTable,states,augmentedGrammar):                      #here states -> lalr_states
     ambiguous = False
     for index, I in enumerate(states):
-        parse_table.append(I.actions)
+        parseTable.append(I.actions)
         for item in I.state:
             rhs_list = item[1].split('.')
             if rhs_list[1] == '':
-                prod_no = augmented_grammar.index([item[0],rhs_list[0]])
+                productionNo = augmentedGrammar.index([item[0],rhs_list[0]])
                 for la in item[2]:
-                    if la in parse_table[index].keys():
-#                        print('Ambiguous grammar!!')
+                    if la in parseTable[index].keys():
                         ambiguous = True
                     else:
-                        parse_table[index][la] = -prod_no
+                        parseTable[index][la] = -productionNo
 
     if ambiguous:
-        print("Ambiguous Grammar!!\n\nGiving priority to Shift over Reduce")
+        print("Ambiguous Grammar Detected!!\n\nGiving priority to Shift over Reduce")
