@@ -1,22 +1,22 @@
 from state import State, lalrState
 from copy import deepcopy
 
-def getTerminalsAndNonTerminals(grammar,term,non_term):
+def getTerminalsAndNonTerminals(grammar,term,nonTerminals):
     for prod in grammar:
-        if prod[0] not in non_term:
-            non_term.append(prod[0])
+        if prod[0] not in nonTerminals:
+            nonTerminals.append(prod[0])
         for char in prod[1]:
             if not char.isupper():
                 if char not in term:
                     term.append(char)
 
 
-def calculateFirst(grammar,first,term,non_term):
+def calculateFirst(grammar,first,term,nonTerminals):
     for t in term:
         first[t] = t;
-    for nt in non_term:
+    for nt in nonTerminals:
         first[nt] = set({})
-    for nt in non_term:
+    for nt in nonTerminals:
         getFirst(nt,grammar,first,term)
 
 
@@ -45,9 +45,9 @@ def getFirst(nt,grammar,first,term):
                         first[nt].add(elem)
 
 
-def getAugmented(grammar,augment_grammar):
-    augment_grammar.append([grammar[0][0]+"'",grammar[0][0]])
-    augment_grammar.extend(grammar)
+def getAugmented(grammar,augmentedGrammar):
+    augmentedGrammar.append([grammar[0][0]+"'",grammar[0][0]])
+    augmentedGrammar.extend(grammar)
 
 def closure(I,augmentedGrammar,first,nonTerminal):
     while True:
@@ -115,7 +115,7 @@ def goto(I,X,augmentedGrammar,first,nonTerminals):
 def isSame(states,newState,I,X):
     for J in states:
         if J.state == newState:
-            I.update_goto(X,J)
+            I.updateGoTo(X,J)
             return True
     return False
 
@@ -139,8 +139,8 @@ def findStates(states,augmentedGrammar,first,terminals,nonTerminals):
                 newState = goto(I.state,X,augmentedGrammar,first,nonTerminals)              #goto(I,X)
                 if (newState != [] ) and not isSame(states,newState,I,X):
                     N = State(newState)
-                    I.update_goto(X,N)
-                    N.update_parentName(I,X)
+                    I.updateGoTo(X,N)
+                    N.updateParentName(I,X)
                     states.append(N)
                     isNewStateAdded = True
 
@@ -150,7 +150,7 @@ def findStates(states,augmentedGrammar,first,terminals,nonTerminals):
 
 def combineStates(lalrStates,states):
     first = lalrState(states[0])
-    first.update_parentList(states[0])
+    first.updateParentList(states[0])
     lalrStates.append(first)
     mapping = [0]
     for I in states[1:]:
@@ -159,21 +159,21 @@ def combineStates(lalrStates,states):
             if J.state[0][:2] == I.state[0][:2] :
                 isStateFound = True
                 mapping.append(J.state_num)
-                J.update_parentList(I)
+                J.updateParentList(I)
                 for index, item in enumerate(J.state):
                     for la in I.state[index][2]:
                         if la not in item[2]:
                             item[2].append(la)
 
         if not isStateFound:
-            new_state = lalrState(I)
-            new_state.update_parentList(I)
+            newState = lalrState(I)
+            newState.updateParentList(I)
 
-            lalrStates.append(new_state)
-            mapping.append(new_state.state_num)
+            lalrStates.append(newState)
+            mapping.append(newState.stateNo)
 
     for I in lalrStates:
-        I.update_mapping(mapping)
+        I.updateMapping(mapping)
 
 
 
@@ -182,9 +182,9 @@ def makeParseTable(parseTable,states,augmentedGrammar):                      #he
     for index, I in enumerate(states):
         parseTable.append(I.actions)
         for item in I.state:
-            rhs_list = item[1].split('.')
-            if rhs_list[1] == '':
-                productionNo = augmentedGrammar.index([item[0],rhs_list[0]])
+            RHS = item[1].split('.')
+            if RHS[1] == '':
+                productionNo = augmentedGrammar.index([item[0],RHS[0]])
                 for la in item[2]:
                     if la in parseTable[index].keys():
                         ambiguous = True
