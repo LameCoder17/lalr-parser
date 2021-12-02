@@ -133,7 +133,7 @@ def findStates(states,augmentedGrammar,first,terminals,nonTerminals):
     states.append(I)
     allSymbols = nonTerminals + terminals
     while True:
-        isNewStateAdded =False
+        isNewStateAdded = False
         for I in states:
             for X in allSymbols:
                 newState = goto(I.state,X,augmentedGrammar,first,nonTerminals)              #goto(I,X)
@@ -158,7 +158,7 @@ def combineStates(lalrStates,states):
         for J in lalrStates:
             if J.state[0][:2] == I.state[0][:2] :
                 isStateFound = True
-                mapping.append(J.state_num)
+                mapping.append(J.stateNo)
                 J.updateParentList(I)
                 for index, item in enumerate(J.state):
                     for la in I.state[index][2]:
@@ -177,7 +177,7 @@ def combineStates(lalrStates,states):
 
 
 
-def makeParseTable(parseTable,states,augmentedGrammar):                      #here states -> lalr_states
+def makeParseTable(parseTable,states,augmentedGrammar):          
     ambiguous = False
     for index, I in enumerate(states):
         parseTable.append(I.actions)
@@ -193,3 +193,5 @@ def makeParseTable(parseTable,states,augmentedGrammar):                      #he
 
     if ambiguous:
         print("Ambiguous Grammar Detected!!\n\nGiving priority to Shift over Reduce")
+        
+    return ambiguous

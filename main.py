@@ -1,38 +1,35 @@
 import sys
-from PyQt5 import QtGui, QtCore, uic, QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import *
-from design import Ui_MainWindow
-
+from design import MainWindow
 from impl import calculateFirst, getTerminalsAndNonTerminals, getAugmented , findStates, combineStates, makeParseTable
-from  state import State, lalrState
+from state import State, lalrState
 
-class parser(QtWidgets.QMainWindow):
+class LALRParser(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
         QtWidgets.QMainWindow.__init__(self,parent)
-        self.ui = Ui_MainWindow()
+        self.ui = MainWindow()
         self.ui.setupUi(self)
         self.setFixedSize(1024, 720)
         self.setWindowTitle("LALR Parser")
         
         self.init()
         
-        self.ui.action_Exit.triggered.connect(self.exitProgram)
         self.ui.displayButton.clicked.connect(self.displayGrammar)
         self.ui.firstButton.clicked.connect(self.displayFirst)
-        self.ui.lr1Button.clicked.connect(self.displayLR1States)
+        self.ui.clr1Button.clicked.connect(self.displayCLR1States)
         self.ui.lalrButton.clicked.connect(self.displayLALRStates)
         self.ui.parseTableButton.clicked.connect(self.displayParseTable)
-        self.ui.plainTextEdit.textChanged.connect(self.checkChanged)
         self.ui.parse.clicked.connect(self.displayParsing)
-        self.ui.actionAuthor.triggered.connect(self.showAuthor)
-        self.ui.action_Open.triggered.connect(self.openFile)
+        self.ui.inputScreen.textChanged.connect(self.checkChanged)
+        self.ui.actionOpen.triggered.connect(self.openFile)
+        self.ui.actionExit.triggered.connect(self.exitProgram)
         
         self.ui.evaluationBox.setStyleSheet("color: black; border: 0px solid black;")
-        self.ui.rowWithButtons.setStyleSheet("color: black; border: 1px solid black;")
+        self.ui.rowWithButtons.setStyleSheet("color: black; border: 0px solid black;")
         self.ui.epsilonBox.setStyleSheet("color: black; border: 0px solid black;")
         self.ui.displayScreen.setStyleSheet("color: black; border: 4px solid black;")  # Display screen
-        self.ui.plainTextEdit.setStyleSheet("color: black; border: 4px solid black;")  # Screen for input
+        self.ui.inputScreen.setStyleSheet("color: black; border: 4px solid black;")  # Screen for input
 
 
     def init(self):
@@ -46,6 +43,7 @@ class parser(QtWidgets.QMainWindow):
         self.parseTable = []
         State.stateCount = -1
         lalrState.stateCount = 0
+        self.isAmbiguous = False
 
     def checkChanged(self):
         self.changed = True
@@ -55,7 +53,7 @@ class parser(QtWidgets.QMainWindow):
         file = QtWidgets.QFileDialog.getOpenFileName(self,'Open Grammar file')
         if file[0] != '':
             file = open(file[0],'r')
-            self.ui.plainTextEdit.setPlainText(file.read())
+            self.ui.inputScreen.setPlainText(file.read())
             file.close()
             self.ui.lineEdit.clear()
             self.ui.displayScreen.clear()
@@ -63,7 +61,7 @@ class parser(QtWidgets.QMainWindow):
 
     def readInputGrammar(self):
         self.init()
-        lines = self.ui.plainTextEdit.toPlainText()         #string
+        lines = self.ui.inputScreen.toPlainText()         #string
         lines_list = lines.split('\n')                      #converting into list of lines
 
         try:
@@ -86,12 +84,12 @@ class parser(QtWidgets.QMainWindow):
                         self.grammar = []
     
             if self.grammar != []:
-                getTerminalsAndNonTerminals(self.grammar,self.term,self.nonTerminals)
+                getTerminalsAndNonTerminals(self.grammar,self.term,self.nonTerminals)  
                 calculateFirst(self.grammar,self.first,self.term,self.nonTerminals)
                 getAugmented(self.grammar,self.augmentedGrammar)
                 findStates(self.states,self.augmentedGrammar,self.first,self.term,self.nonTerminals)
                 combineStates(self.lalrStates, self.states)
-                makeParseTable(self.parseTable,self.lalrStates,self.augmentedGrammar)
+                self.isAmbiguous = makeParseTable(self.parseTable,self.lalrStates,self.augmentedGrammar)
                 self.changed = False
 
         except (KeyError, IndexError):
@@ -120,12 +118,12 @@ class parser(QtWidgets.QMainWindow):
             for nonterm in self.nonTerminals:
                 self.ui.displayScreen.append('First('+nonterm+') : '+' '.join(self.first[nonterm])+'\n')
 
-    def displayLR1States(self):
+    def displayCLR1States(self):
         if self.states == [] or self.changed:
             self.readInputGrammar()
         if self.states != []:
             self.ui.displayScreen.clear()
-            self.ui.displayScreen.append("Number of LR(1) states : "+ str(self.states[len(self.states)-1].stateNo + 1))
+            self.ui.displayScreen.append("Number of CLR(1) states : "+ str(self.states[len(self.states)-1].stateNo + 1))
             for state in self.states:
                 self.ui.displayScreen.append('----------------------------------------------------------------')
                 if state.stateNo == 0:
@@ -146,6 +144,10 @@ class parser(QtWidgets.QMainWindow):
             self.ui.displayScreen.clear()
             self.ui.displayScreen.append("Number of LALR states : " + str(lalrState.stateCount))
             for state in self.lalrStates:
+                if int(state.parentList[0]) > int(self.states[len(self.states)-1].stateNo + 1):
+                    for i in range(len(state.parentList)):
+                        state.parentList[i] = str(int(state.parentList[i]) - int(self.states[len(self.states)-1].stateNo + 1))
+                        
                 self.ui.displayScreen.append('----------------------------------------------------------------')
                 if state.stateNo == 0:
                     self.ui.displayScreen.append("\nI"+str(state.stateNo)+' : '+'\tGot by -> '+str(state.parentList)+'\n')
@@ -164,40 +166,45 @@ class parser(QtWidgets.QMainWindow):
 
         if self.grammar != []:
             self.ui.displayScreen.clear()
-            allSymbols = []
-            allSymbols.extend(self.term)
-            allSymbols.append('$')
-            allSymbols.extend(self.nonTerminals)
-            if 'e' in allSymbols:
-                allSymbols.remove('e')
+            
+            print(self.isAmbiguous)
+            if self.isAmbiguous:
+                self.ui.displayScreen.append("Ambiguous Grammar Detected")
+            else:
+                allSymbols = []
+                allSymbols.extend(self.term)
+                allSymbols.append('$')
+                allSymbols.extend(self.nonTerminals)
+                if 'e' in allSymbols:
+                    allSymbols.remove('e')
 
-            head = '{0:12}'.format(' ')
-            for X in allSymbols:
-                head = head + '{0:12}'.format(X)
-            self.ui.displayScreen.setText(head+'\n')
-            s = '------------'*len(allSymbols)
-            self.ui.displayScreen.append(s)
-
-            for index, state in enumerate(self.parseTable):
-                line = '{0:<12}'.format(index)
+                head = '{0:12}'.format(' ')
                 for X in allSymbols:
-                    if X in state.keys():
-                        if X in self.nonTerminals:
-                            action = state[X]
-                        else:
-                            if state[X] > 0:
-                                action = 's' + str(state[X])
-                            elif state[X] < 0:
-                                action = 'r' + str(abs(state[X]))
-                            elif state[X] == 0:
-                                action = 'accept'
-                        
-                        line = line + '{0:<12}'.format(action)
-                    else:
-                        line = line + '{0:<12}'.format("")
-    
-                self.ui.displayScreen.append(line)
+                    head = head + '{0:12}'.format(X)
+                self.ui.displayScreen.setText(head+'\n')
+                s = '------------'*len(allSymbols)
                 self.ui.displayScreen.append(s)
+
+                for index, state in enumerate(self.parseTable):
+                    line = '{0:<12}'.format(index)
+                    for X in allSymbols:
+                        if X in state.keys():
+                            if X in self.nonTerminals:
+                                action = state[X]
+                            else:
+                                if state[X] > 0:
+                                    action = 's' + str(state[X])
+                                elif state[X] < 0:
+                                    action = 'r' + str(abs(state[X]))
+                                elif state[X] == 0:
+                                    action = 'accept'
+                            
+                            line = line + '{0:<12}'.format(action)
+                        else:
+                            line = line + '{0:<12}'.format("")
+        
+                    self.ui.displayScreen.append(line)
+                    self.ui.displayScreen.append(s)
 
     def displayParsing(self):
         if self.grammar == [] or self.changed:
@@ -222,7 +229,7 @@ class parser(QtWidgets.QMainWindow):
                 if action > 0:
                     inpt.pop(0)
                     stack.append(action)
-                    self.ui.displayScreen.append(string + 'Shift ' + a+ '\n')
+                    self.ui.displayScreen.append(string + 'Shift ' + a + '\n')
                     a = inpt[0]
                 elif action < 0:
                     prod = augment_grammar[-action]
@@ -241,11 +248,8 @@ class parser(QtWidgets.QMainWindow):
     def exitProgram(self):
         QtGui.QApplication.quit()
         
-    def showAuthor(self):
-        QtWidgets.QMessageBox.information(self, "About", "LALR PARSER\n\nAuthor:\n  Akshay Hebbar Y S\t", QtWidgets.QMessageBox.Ok)
-
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    myapp = parser()
+    myapp = LALRParser()
     myapp.show()
     sys.exit(app.exec())
