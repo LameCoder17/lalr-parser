@@ -1,4 +1,5 @@
-from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5 import QtGui, QtCore, uic, QtWidgets
+from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5.QtCore import *
 
 try:
@@ -15,7 +16,7 @@ except AttributeError:
     def _translate(context, text, disambig):
         return QtWidgets.QApplication.translate(context, text, disambig)
 
-class MainWindow(object):
+class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         '''
         Sets up the UI on the screen
@@ -75,7 +76,7 @@ class MainWindow(object):
         self.parseTableButton.setObjectName(_fromUtf8("parseTableButton"))
         
         self.displayScreen = QtWidgets.QTextBrowser(self.centralwidget)
-        self.displayScreen.setGeometry(QtCore.QRect(200, 300, 800, 350))  # Screen for displaying
+        self.displayScreen.setGeometry(QtCore.QRect(200, 300, 800, 350)) 
         font = QtGui.QFont()
         font.setPointSize(12)
         self.displayScreen.setFont(font)
@@ -148,7 +149,7 @@ class MainWindow(object):
         self.enterExpressionLabel.setBuddy(self.lineEdit)
         self.enterGrammarLabel.setBuddy(self.inputScreen)
 
-        self.displayUIElements(MainWindow)
+        self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         MainWindow.setTabOrder(self.inputScreen, self.lineEdit)
         MainWindow.setTabOrder(self.lineEdit, self.parse)
@@ -159,7 +160,7 @@ class MainWindow(object):
         MainWindow.setTabOrder(self.lalrButton, self.parseTableButton)
         MainWindow.setTabOrder(self.parseTableButton, self.displayScreen)
 
-    def displayUIElements(self, MainWindow):
+    def retranslateUi(self, MainWindow):
         '''
         Sets text for various buttons and labels and some UI design
         '''
