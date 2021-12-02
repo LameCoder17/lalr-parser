@@ -7,6 +7,10 @@ from state import State, lalrState
 
 class LALRParser(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
+        '''
+        Default constructor
+        Connects buttons and some UI design
+        '''
         QtWidgets.QMainWindow.__init__(self,parent)
         self.ui = MainWindow()
         self.ui.setupUi(self)
@@ -28,11 +32,14 @@ class LALRParser(QtWidgets.QMainWindow):
         self.ui.evaluationBox.setStyleSheet("color: black; border: 0px solid black;")
         self.ui.rowWithButtons.setStyleSheet("color: black; border: 0px solid black;")
         self.ui.epsilonBox.setStyleSheet("color: black; border: 0px solid black;")
-        self.ui.displayScreen.setStyleSheet("color: black; border: 4px solid black;")  # Display screen
-        self.ui.inputScreen.setStyleSheet("color: black; border: 4px solid black;")  # Screen for input
+        self.ui.displayScreen.setStyleSheet("color: black; border: 4px solid black;")
+        self.ui.inputScreen.setStyleSheet("color: black; border: 4px solid black;")  
 
 
     def init(self):
+        '''
+        Initializes all variables needed
+        '''
         self.grammar = []
         self.augmentedGrammar = []
         self.first = {}
@@ -46,10 +53,16 @@ class LALRParser(QtWidgets.QMainWindow):
         self.isAmbiguous = False
 
     def checkChanged(self):
+        '''
+        Checks if the grammar is changed or not
+        '''
         self.changed = True
 
 
     def openFile(self):
+        '''
+        Opens a file and reads the grammar written on it
+        '''
         file = QtWidgets.QFileDialog.getOpenFileName(self,'Open Grammar file')
         if file[0] != '':
             file = open(file[0],'r')
@@ -60,10 +73,13 @@ class LALRParser(QtWidgets.QMainWindow):
 
 
     def readInputGrammar(self):
+        '''
+        Reads the grammar from the inputScreen
+        '''
         self.init()
-        lines = self.ui.inputScreen.toPlainText()         #string
-        lines_list = lines.split('\n')                      #converting into list of lines
-
+        lines = self.ui.inputScreen.toPlainText()        
+        lines_list = lines.split('\n')                     
+        
         try:
             for line in lines_list:
                 line = line.replace(' ' ,'')
@@ -100,6 +116,9 @@ class LALRParser(QtWidgets.QMainWindow):
 ############################         DISPLAY          ################################
 
     def displayGrammar(self):
+        '''
+        Displays the grammar inputted
+        '''
         self.ui.displayScreen.clear()
         if self.grammar == [] or self.changed:
             self.readInputGrammar()
@@ -111,6 +130,9 @@ class LALRParser(QtWidgets.QMainWindow):
             self.ui.displayScreen.append("\nNon Terminals : "+' '.join(self.nonTerminals)+"\nTerminals : "+' '.join(self.term))
         
     def displayFirst(self):
+        '''
+        Displays the first of the given grammar
+        '''
         if self.first == {} or self.changed:
             self.readInputGrammar()
         if self.first != {}:
@@ -119,6 +141,9 @@ class LALRParser(QtWidgets.QMainWindow):
                 self.ui.displayScreen.append('First('+nonterm+') : '+' '.join(self.first[nonterm])+'\n')
 
     def displayCLR1States(self):
+        '''
+        Makes the CLR(1) states DFA
+        '''
         if self.states == [] or self.changed:
             self.readInputGrammar()
         if self.states != []:
@@ -138,15 +163,18 @@ class LALRParser(QtWidgets.QMainWindow):
                         self.ui.displayScreen.insertPlainText(str(k)+' -> '+str(abs(v))+'\t')
 
     def displayLALRStates(self):
+        '''
+        Makes the LALR(1) states
+        '''
         if self.lalrStates == [] or self.changed:
             self.readInputGrammar()
         if self.lalrStates != []:
             self.ui.displayScreen.clear()
-            self.ui.displayScreen.append("Number of LALR states : " + str(lalrState.stateCount))
+            self.ui.displayScreen.append("Number of LALR(1) states : " + str(lalrState.stateCount))
             for state in self.lalrStates:
-                if int(state.parentList[0]) > int(self.states[len(self.states)-1].stateNo + 1):
+                if int(state.parentList[0]) >= int(self.states[len(self.states)-1].stateNo + 1):
                     for i in range(len(state.parentList)):
-                        state.parentList[i] = str(int(state.parentList[i]) - int(self.states[len(self.states)-1].stateNo + 1))
+                        state.parentList[i] = int(int(state.parentList[i]) - int(self.states[len(self.states)-1].stateNo + 1))
                         
                 self.ui.displayScreen.append('----------------------------------------------------------------')
                 if state.stateNo == 0:
@@ -161,6 +189,9 @@ class LALRParser(QtWidgets.QMainWindow):
                         self.ui.displayScreen.insertPlainText(str(k)+' -> '+str(abs(v))+'\t')
 
     def displayParseTable(self):
+        '''
+        Displays the parsing table
+        '''
         if self.grammar == [] or self.changed:
             self.readInputGrammar()
 
@@ -207,6 +238,9 @@ class LALRParser(QtWidgets.QMainWindow):
                     self.ui.displayScreen.append(s)
 
     def displayParsing(self):
+        '''
+        Takes the string for parsing
+        '''
         if self.grammar == [] or self.changed:
             self.readInputGrammar()
         if self.grammar != []:
@@ -215,6 +249,9 @@ class LALRParser(QtWidgets.QMainWindow):
             self.parse(self.parseTable, self.augmentedGrammar, line_input)
 
     def parse(self,parse_table,augment_grammar,inpt):
+        '''
+        Parses the inputted string with the given grammar
+        '''
         inpt = list(inpt+'$')
         stack = [0]
         a = inpt[0]
@@ -246,6 +283,9 @@ class LALRParser(QtWidgets.QMainWindow):
             self.ui.displayScreen.append('\n\nREJECTED\n')
 
     def exitProgram(self):
+        '''
+        Exits the program
+        '''
         QtGui.QApplication.quit()
         
 if __name__ == '__main__':

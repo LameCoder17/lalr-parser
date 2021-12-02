@@ -2,6 +2,9 @@ from state import State, lalrState
 from copy import deepcopy
 
 def getTerminalsAndNonTerminals(grammar,term,nonTerminals):
+    '''
+    Finds terminal and non-terminal symbols
+    '''
     for prod in grammar:
         if prod[0] not in nonTerminals:
             nonTerminals.append(prod[0])
@@ -12,6 +15,9 @@ def getTerminalsAndNonTerminals(grammar,term,nonTerminals):
 
 
 def calculateFirst(grammar,first,term,nonTerminals):
+    '''
+    Calculates first
+    '''
     for t in term:
         first[t] = t;
     for nt in nonTerminals:
@@ -21,6 +27,9 @@ def calculateFirst(grammar,first,term,nonTerminals):
 
 
 def getFirst(nt,grammar,first,term):
+    '''
+    Finds first
+    '''
     for prod in grammar:
         if nt in prod[0]:
             rhs = prod[1]
@@ -46,10 +55,16 @@ def getFirst(nt,grammar,first,term):
 
 
 def getAugmented(grammar,augmentedGrammar):
+    '''
+    Finds augmented grammar
+    '''
     augmentedGrammar.append([grammar[0][0]+"'",grammar[0][0]])
     augmentedGrammar.extend(grammar)
 
 def closure(I,augmentedGrammar,first,nonTerminal):
+    '''
+    Finds closure
+    '''
     while True:
         isNewItemAdded = False
         for item in I:
@@ -64,7 +79,7 @@ def closure(I,augmentedGrammar,first,nonTerminal):
                             rhs = 'e.'
                         else:
                             rhs = '.' + prod[1]
-                        lookAhead = []                                     #look ahead
+                        lookAhead = []                                    
                         if position < (len(item[1]) - 2):
                             Ba = item[1][position+2]
                             for firs in first[Ba]:
@@ -98,6 +113,9 @@ def closure(I,augmentedGrammar,first,nonTerminal):
 
 
 def goto(I,X,augmentedGrammar,first,nonTerminals):
+    '''
+    Finds goto
+    '''
     J =[]
     for item in I:
         position = item[1].index('.')
@@ -113,6 +131,9 @@ def goto(I,X,augmentedGrammar,first,nonTerminals):
 
 
 def isSame(states,newState,I,X):
+    '''
+    Checks if same state exists or not
+    '''
     for J in states:
         if J.state == newState:
             I.updateGoTo(X,J)
@@ -122,12 +143,18 @@ def isSame(states,newState,I,X):
 
 
 def initFirst(augmentedGrammar,first,nonTerminals):
+    '''
+    Initializes
+    '''
     I = [[augmentedGrammar[0][0],'.'+augmentedGrammar[0][1],['$']]]
     closure(I,augmentedGrammar,first,nonTerminals)
     return I
 
 
 def findStates(states,augmentedGrammar,first,terminals,nonTerminals):
+    '''
+    Finds the states of CLR(1)
+    '''
     state1 = initFirst(augmentedGrammar,first,nonTerminals)
     I = State(state1)
     states.append(I)
@@ -149,6 +176,9 @@ def findStates(states,augmentedGrammar,first,terminals,nonTerminals):
 
 
 def combineStates(lalrStates,states):
+    '''
+    Combines the states of CLR(1) 
+    '''
     first = lalrState(states[0])
     first.updateParentList(states[0])
     lalrStates.append(first)
@@ -177,7 +207,10 @@ def combineStates(lalrStates,states):
 
 
 
-def makeParseTable(parseTable,states,augmentedGrammar):          
+def makeParseTable(parseTable,states,augmentedGrammar): 
+    '''
+    Makes the parse table
+    '''         
     ambiguous = False
     for index, I in enumerate(states):
         parseTable.append(I.actions)
@@ -192,6 +225,6 @@ def makeParseTable(parseTable,states,augmentedGrammar):
                         parseTable[index][la] = -productionNo
 
     if ambiguous:
-        print("Ambiguous Grammar Detected!!\n\nGiving priority to Shift over Reduce")
+        print("Ambiguous Grammar Detected!!")
         
     return ambiguous

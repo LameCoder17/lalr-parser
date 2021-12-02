@@ -17,6 +17,9 @@ except AttributeError:
 
 class MainWindow(object):
     def setupUi(self, MainWindow):
+        '''
+        Sets up the UI on the screen
+        '''
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.resize(1024, 720)
         
@@ -47,7 +50,7 @@ class MainWindow(object):
         self.parse.setObjectName(_fromUtf8("parse"))
         
         self.rowWithButtons = QtWidgets.QGroupBox(self.centralwidget)
-        self.rowWithButtons.setGeometry(QtCore.QRect(20, 300, 140, 350))  # Widget which has all buttons in it
+        self.rowWithButtons.setGeometry(QtCore.QRect(20, 300, 140, 350))
         self.rowWithButtons.setTitle(_fromUtf8(""))
         self.rowWithButtons.setObjectName(_fromUtf8("rowWithButtons"))
         
@@ -101,10 +104,6 @@ class MainWindow(object):
         font.setFamily(_fromUtf8("Arial"))
         font.setPointSize(26)
         font.setBold(True)
-        font.setUnderline(False)
-        font.setWeight(75)
-        font.setStrikeOut(False)
-        font.setKerning(True)
         self.headingLabel.setFont(font)
         self.headingLabel.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.headingLabel.setAlignment(QtCore.Qt.AlignCenter)
@@ -145,6 +144,7 @@ class MainWindow(object):
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExit)
         self.menubar.addAction(self.menuFile.menuAction())
+        
         self.enterExpressionLabel.setBuddy(self.lineEdit)
         self.enterGrammarLabel.setBuddy(self.inputScreen)
 
@@ -160,13 +160,16 @@ class MainWindow(object):
         MainWindow.setTabOrder(self.parseTableButton, self.displayScreen)
 
     def displayUIElements(self, MainWindow):
+        '''
+        Sets text for various buttons and labels and some UI design
+        '''
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
         self.enterExpressionLabel.setText(_translate("MainWindow", "Enter expression to evaluate :", None))
         self.parse.setText(_translate("MainWindow", "Parse", None))
         self.displayButton.setText(_translate("MainWindow", "Display", None))
         self.firstButton.setText(_translate("MainWindow", "First", None))
         self.clr1Button.setText(_translate("MainWindow", "CLR(1) items", None))
-        self.lalrButton.setText(_translate("MainWindow", "LALR items", None))
+        self.lalrButton.setText(_translate("MainWindow", "LALR(1) items", None))
         self.parseTableButton.setText(_translate("MainWindow", "Parsing Table", None))
         self.enterGrammarLabel.setText(_translate("MainWindow", "Enter grammar :", None))
         self.headingLabel.setText(_translate("MainWindow", "LALR Parser", None))
