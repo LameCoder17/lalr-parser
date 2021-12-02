@@ -96,7 +96,7 @@ class LALRParser(QtWidgets.QMainWindow):
                             self.grammar.append(listOfLines)
                     else:
                         self.ui.displayScreen.clear()
-                        self.ui.displayScreen.setText("Invalid grammar")
+                        self.ui.displayScreen.setText("Invalid grammar !")
                         self.grammar = []
     
             if self.grammar != []:
@@ -113,8 +113,6 @@ class LALRParser(QtWidgets.QMainWindow):
             self.ui.displayScreen.setText("Invalid grammar")
             self.init()
             
-############################         DISPLAY          ################################
-
     def displayGrammar(self):
         '''
         Displays the grammar inputted
@@ -160,7 +158,7 @@ class LALRParser(QtWidgets.QMainWindow):
                 if state.actions != {}:
                     self.ui.displayScreen.append('\nActions : ')
                     for k,v in state.actions.items():
-                        self.ui.displayScreen.insertPlainText(str(k)+' -> '+str(abs(v))+'\t')
+                        self.ui.displayScreen.insertPlainText(str(k)+' -> '+ str(abs(v))+'\t')
 
     def displayLALRStates(self):
         '''
@@ -174,7 +172,7 @@ class LALRParser(QtWidgets.QMainWindow):
             for state in self.lalrStates:
                 if int(state.parentList[0]) >= int(self.states[len(self.states)-1].stateNo + 1):
                     for i in range(len(state.parentList)):
-                        state.parentList[i] = int(int(state.parentList[i]) - int(self.states[len(self.states)-1].stateNo + 1))
+                        state.parentList[i] = int(int(state.parentList[i]) - int(self.states[len(self.states)-1].stateNo + 1) + i)
                         
                 self.ui.displayScreen.append('----------------------------------------------------------------')
                 if state.stateNo == 0:
@@ -200,42 +198,42 @@ class LALRParser(QtWidgets.QMainWindow):
             
             print(self.isAmbiguous)
             if self.isAmbiguous:
-                self.ui.displayScreen.append("Ambiguous Grammar Detected")
-            else:
-                allSymbols = []
-                allSymbols.extend(self.term)
-                allSymbols.append('$')
-                allSymbols.extend(self.nonTerminals)
-                if 'e' in allSymbols:
-                    allSymbols.remove('e')
+                self.ui.displayScreen.append("Ambiguous Grammar Detected \n\n Choosing Shift over Reduce\n\n")
+            
+            allSymbols = []
+            allSymbols.extend(self.term)
+            allSymbols.append('$')
+            allSymbols.extend(self.nonTerminals)
+            if 'e' in allSymbols:
+                allSymbols.remove('e')
 
-                head = '{0:12}'.format(' ')
+            head = '{0:12}'.format(' ')
+            for X in allSymbols:
+                head = head + '{0:12}'.format(X)
+            self.ui.displayScreen.append(head+'\n')
+            s = '------------'*len(allSymbols)
+            self.ui.displayScreen.append(s)
+
+            for index, state in enumerate(self.parseTable):
+                line = '{0:<12}'.format(index)
                 for X in allSymbols:
-                    head = head + '{0:12}'.format(X)
-                self.ui.displayScreen.setText(head+'\n')
-                s = '------------'*len(allSymbols)
-                self.ui.displayScreen.append(s)
-
-                for index, state in enumerate(self.parseTable):
-                    line = '{0:<12}'.format(index)
-                    for X in allSymbols:
-                        if X in state.keys():
-                            if X in self.nonTerminals:
-                                action = state[X]
-                            else:
-                                if state[X] > 0:
-                                    action = 's' + str(state[X])
-                                elif state[X] < 0:
-                                    action = 'r' + str(abs(state[X]))
-                                elif state[X] == 0:
-                                    action = 'accept'
-                            
-                            line = line + '{0:<12}'.format(action)
+                    if X in state.keys():
+                        if X in self.nonTerminals:
+                            action = state[X]
                         else:
-                            line = line + '{0:<12}'.format("")
-        
-                    self.ui.displayScreen.append(line)
-                    self.ui.displayScreen.append(s)
+                            if state[X] > 0:
+                                action = 's' + str(state[X])
+                            elif state[X] < 0:
+                                action = 'r' + str(abs(state[X]))
+                            elif state[X] == 0:
+                                action = 'accept'
+                        
+                        line = line + '{0:<12}'.format(action)
+                    else:
+                        line = line + '{0:<12}'.format("")
+    
+                self.ui.displayScreen.append(line)
+                self.ui.displayScreen.append(s)
 
     def displayParsing(self):
         '''

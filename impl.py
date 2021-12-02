@@ -93,7 +93,7 @@ def closure(I,augmentedGrammar,first,nonTerminal):
                         else:
                             lookAhead = deepcopy(item[2])
 
-                        newItem = [next,rhs,lookAhead]               #structure of each item
+                        newItem = [next,rhs,lookAhead]    
                         
                         if newItem not in I:
                             sameStateWithDifferentLookAhead = False
@@ -163,7 +163,7 @@ def findStates(states,augmentedGrammar,first,terminals,nonTerminals):
         isNewStateAdded = False
         for I in states:
             for X in allSymbols:
-                newState = goto(I.state,X,augmentedGrammar,first,nonTerminals)              #goto(I,X)
+                newState = goto(I.state,X,augmentedGrammar,first,nonTerminals)            
                 if (newState != [] ) and not isSame(states,newState,I,X):
                     N = State(newState)
                     I.updateGoTo(X,N)
